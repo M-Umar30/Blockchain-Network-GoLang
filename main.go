@@ -1,13 +1,13 @@
 /*
 	20I-0518 - Muhammad Umar
-	20I-
+	20I-0450 - Fatima Zubeda
 	20L-
 	20I-
 */
 
 // Assignment 1: Block Chain Implementation
 
-// TODO: Seperate files for all hash related functions? 
+// TODO: Seperate files for all hash related functions?
 // TODO: Calculate hash of block
 // TODO: Complete merkel tree implementation
 // TODO: Block mining
@@ -16,8 +16,7 @@
 
 // Assignment 2: P2P Implementation
 
-
-package main 
+package main
 
 import (
 	"fmt"
@@ -25,4 +24,5 @@ import (
 
 func main() {
 	fmt.Println("Hello World!")
+	Create_Merkel()
 }
