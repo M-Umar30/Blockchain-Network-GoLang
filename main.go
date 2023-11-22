@@ -1,32 +1,25 @@
-/*
-	20I-0518 - Muhammad Umar
-	20I-0450 - Fatima Zubeda
-	20L-
-	20I-
-*/
-
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"encoding/hex"
+	"os"
+	"time"
 )
 
-// TODO: Verifying block and chain (shouldn't it be like a given that its verified cuz implementation?) just make a function which iterates through everything maybe?
 func main() {
-	// Example data
-	prevBlockHash, _ := hex.DecodeString("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
-	merkleRoot, _ := hex.DecodeString("abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789")
 
-	// Create a block
-	block := create_block([32]byte(prevBlockHash), [32]byte{}, []string{"Transaction1", "Transaction2"}, [32]byte(merkleRoot))
-
-	// Mine the block
-	success := block.mine()
-
-	if success {
-		fmt.Println("Block mined successfully!")
-	} else {
-		fmt.Println("Mining failed.")
+	bootstrap_address := Address{Port: 8080}
+	go peer_main(bootstrap_address, 20, true, false, true, Address{}, 4, 6)
+	for i := 8081; i <= 8083; i++ {
+		go peer_main(Address{Port: uint16(i)}, 20, false, i%2 == 1, i%2 == 0, bootstrap_address, 4, 6)
 	}
+
+	time.Sleep(30 * time.Second)
+
+	go peer_main(Address{Port: 8086}, 20, false, true, true, bootstrap_address, 4, 6)
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter text: ")
+	reader.ReadString('\n')
 }
