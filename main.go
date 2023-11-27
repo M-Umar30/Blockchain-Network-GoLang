@@ -1,11 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
 
 func main() {
+	// test_propagation()
+	test_network()
+}
+
+func test_propagation() {
 	// prevBlockHash, _ := hex.DecodeString("0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")
 	// merkleRoot, _ := hex.DecodeString("abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789")
 
@@ -50,4 +56,44 @@ func main() {
 	go node3.Start()
 	// Wait for the simulation to finish
 	time.Sleep(15 * time.Second)
+}
+
+func test_network() {
+	// Create a P2P network
+	p2pNetwork := NewP2PNetwork()
+
+	// Create initial Peers in the P2P network
+	Peer1 := NewPeer(1, 8081)
+	Peer2 := NewPeer(2, 8082)
+	Peer3 := NewPeer(3, 8083)
+
+	// Register initial Peers with the bootstrap Peer
+	p2pNetwork.BootstrapPeer.RegisterPeer(Peer1)
+	p2pNetwork.BootstrapPeer.RegisterPeer(Peer2)
+	p2pNetwork.BootstrapPeer.RegisterPeer(Peer3)
+
+	// Start Peers
+	go Peer1.Start(p2pNetwork)
+	go Peer2.Start(p2pNetwork)
+	go Peer3.Start(p2pNetwork)
+
+	// Allow some time for Peers to establish connections
+	time.Sleep(2 * time.Second)
+
+	// Create a new Peer and join the network
+	newPeer := NewPeer(4, 8084)
+	newPeer.JoinNetwork(p2pNetwork)
+
+	// Display the P2P network
+	p2pNetwork.DisplayNetwork()
+
+	// Wait for the simulation to finish
+	time.Sleep(20 * time.Second)
+
+	// Display connected ports for each Peer
+	fmt.Printf("\nConnected Ports:\n")
+	for _, Peer := range p2pNetwork.BootstrapPeer.Peers {
+		connectedPorts := Peer.GetConnectedPorts()
+		fmt.Printf("Peer %d connected to ports: %v\n", Peer.ID, connectedPorts)
+	}
 }
