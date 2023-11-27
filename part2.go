@@ -9,13 +9,6 @@ import (
 	"time"
 )
 
-// type Block struct {
-// 	Transactions []string
-// 	Nonce        int
-// 	PreviousHash string
-// 	SelfHash     string
-// }
-
 type Node struct {
 	ID                     int
 	recentTransactions     map[string]bool
@@ -28,8 +21,6 @@ type Node struct {
 	miningInProgress       bool
 	miningInProgressMu     sync.Mutex
 	transactionThreshold   int
-	miningDifficulty       int
-	miningDifficultyString string
 	block                  Block
 	Neighbors              []*Node
 	NeighborChans          []chan []byte // Each neighbor has a dedicated channel
@@ -38,7 +29,7 @@ type Node struct {
 	lastMinedSenderID      int
 }
 
-func NewNode(id, transactionThreshold, miningDifficulty int) *Node {
+func NewNode(id, transactionThreshold int) *Node {
 	return &Node{
 		ID:                   id,
 		recentTransactions:   make(map[string]bool),
@@ -46,7 +37,6 @@ func NewNode(id, transactionThreshold, miningDifficulty int) *Node {
 		blockChannel:         make(chan []byte),
 		minedBlockChannel:    make(chan Block),
 		transactionThreshold: transactionThreshold,
-		miningDifficulty:     miningDifficulty,
 		recentlySentBlocks:   make(map[int]bool),
 	}
 }
@@ -61,9 +51,7 @@ func (node *Node) AddNeighbor(neighbor *Node) {
 
 }
 
-// func (node *Node) AddNeighborChannel2(neighborChannel chan []byte) {
-// 	node.neighborChannels = append(node.neighborChannels, neighborChannel)
-// }
+
 
 func (node *Node) ReceiveTransaction(transaction string) {
 	node.transactionMutex.Lock()
@@ -87,7 +75,7 @@ func (node *Node) BroadcastTransaction(transaction string) {
 }
 
 func (node *Node) MineBlock(transactions []string, previousHash string) Block {
-	prevhash, err := hex.DecodeString(previousHash)
+	prevhash, err := hex.DecodeString(hash_to_string(hash_string(previousHash)))
 	if err != nil {
 		fmt.Println("Error decoding prevhash:", err)
 	}
@@ -114,15 +102,7 @@ func (node *Node) MineBlock(transactions []string, previousHash string) Block {
 
 }
 
-// func calculateBlockHash(block Block) string {
-// 	// This is a simplified hash calculation for demonstration purposes.
-// 	return fmt.Sprintf("%d-%s-%d", block.Nonce, block.Prev_Block_Hash, len(block.Transactions))
-// }
 
-// func isHashValid(hash string, difficulty int) bool {
-// 	// Check if the hash starts with a certain number of zeros based on difficulty
-// 	return hash[:difficulty] == node.miningDifficultyString
-// }
 
 func (node *Node) Start() {
 	// Create a WaitGroup
@@ -179,7 +159,8 @@ func (node *Node) MineAndBroadcastBlock() {
 	node.recentTransactionsMu.Unlock()
 
 	// Simulate mining process
-	minedBlock := node.MineBlock(transactions, "PreviousHash")
+	minedBlock := node.MineBlock(transactions, ("PreviousHash"))
+	fmt.Println("Node ", node.ID, " Mined Block", hash_to_string(minedBlock.Self_Hash))
 	node.lastMinedSenderID = node.ID
 
 	// Reset recent transactions after including them in a block
@@ -195,16 +176,6 @@ func (node *Node) MineAndBroadcastBlock() {
 	node.miningInProgress = false
 }
 
-// // Function to broadcast a mined block to all neighbors
-// func (node *Node) BroadcastMinedBlock(minedBlock Block) {
-// 	for _, neighborChan := range node.NeighborChans {
-// 		// Send the mined block to each neighbor's channel
-// 		neighborChan <- minedBlock
-// 	}
-
-// 	// You can also broadcast to the main block channel if needed
-// 	node.blockChannel <- minedBlock
-// }
 
 func (node *Node) BroadcastMinedBlock(minedBlock Block) {
 	// Encode the mined block
@@ -232,36 +203,11 @@ func (node *Node) BroadcastMinedBlock(minedBlock Block) {
 	fmt.Printf("Node %d sent block to main channel\n", node.ID)
 }
 
-// func (node *Node) BroadcastMinedBlock(minedBlock Block) {
-// 	for _, neighborChannel := range node.NeighborChans {
-// 		// Create a buffer to encode the mined block
-// 		var buffer bytes.Buffer
-// 		encoder := gob.NewEncoder(&buffer)
-// 		if err := encoder.Encode(minedBlock); err != nil {
-// 			fmt.Printf("Error encoding mined block: %v\n", err)
-// 			continue
-// 		}
 
-// 		// Send the encoded block to all neighbors
-// 		neighborChannel <- buffer.Bytes()
-// 	}
-
-// 	// Create a buffer to encode the mined block
-// 	var mainBuffer bytes.Buffer
-// 	mainEncoder := gob.NewEncoder(&mainBuffer)
-// 	if err := mainEncoder.Encode(minedBlock); err != nil {
-// 		fmt.Printf("Error encoding mined block: %v\n", err)
-// 		return
-// 	}
-
-// 	// Send the encoded block to the main block channel
-// 	node.blockChannel <- mainBuffer.Bytes()
-// }
 
 func (node *Node) ReceiveMinedBlock(minedBlock Block) {
 	// Process the received mined block
 	fmt.Printf("Node %d received mined block: %s\n", node.ID, minedBlock.Self_Hash)
-
 	// TODO: Further processing of the mined block
 }
 
@@ -288,51 +234,7 @@ func (node *Node) handleIncomingBlocks(wg *sync.WaitGroup) {
 			}
 		}
 
-		// Read from the main block channel
-		// select {
-		// case encodedBlock := <-node.blockChannel:
-		// 	// Decode the received mined block from the main channel
-		// 	var receivedBlock Block
-		// 	mainDecoder := gob.NewDecoder(bytes.NewReader(encodedBlock))
-		// 	if err := mainDecoder.Decode(&receivedBlock); err != nil {
-		// 		fmt.Printf("Error decoding mined block: %v\n", err)
-		// 		continue
-		// 	}
-
-		// 	// Process the received mined block from the main channel
-		// 	fmt.Printf("Node %d received mined block from main channel: %x\n", node.ID, receivedBlock.Self_Hash)
-		// 	// Add more cases if you have other types of messages or channels
-		// }
 	}
 }
 
-// func (node *Node) handleIncomingBlocks(wg *sync.WaitGroup) {
-// 	fmt.Printf("Node %d started handling incoming blocks\n", node.ID)
-// 	defer wg.Done()
 
-// 	for {
-// 		// Read from each neighbor's channel
-// 		for i, neighborChan := range node.NeighborChans {
-// 			select {
-// 			case minedBlock := <-neighborChan:
-// 				// Process the received mined block from a neighbor's channel
-// 				fmt.Printf("Node %d received mined block from neighbor: %s\n", node.ID, minedBlock.Self_Hash)
-// 				// Add more cases if you have other types of messages or channels
-// 			}
-// 		}
-// 	}
-// }
-
-// func (node *Node) handleIncomingBlocks() {
-// 	for minedBlock := range node.blockChannel {
-// 		// Process the received mined block
-// 		node.ReceiveMinedBlock(minedBlock)
-// 	}
-// }
-
-// func (node *Node) ReceiveMinedBlock(minedBlock Block) {
-// 	// Process the received mined block
-// 	fmt.Printf("Node %d received mined block: %s\n", node.ID, minedBlock.Self_Hash)
-
-// 	// TODO: Further processing of the mined block
-// }

@@ -24,9 +24,9 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	// Create nodes
-	node1 := NewNode(1, 3, 2) // ID, Transaction Threshold, Mining Difficulty
-	node2 := NewNode(2, 3, 2)
-	node3 := NewNode(3, 3, 2)
+	node1 := NewNode(1, 3) // ID, Transaction Threshold, Mining Difficulty
+	node2 := NewNode(2, 3)
+	node3 := NewNode(3, 3)
 
 	// Connect nodes with neighbor channels
 	node1.AddNeighborChannel(node2.transactionChannel)
@@ -49,5 +49,5 @@ func main() {
 	go node2.Start()
 	go node3.Start()
 	// Wait for the simulation to finish
-	time.Sleep(10 * time.Second)
+	time.Sleep(15 * time.Second)
 }
