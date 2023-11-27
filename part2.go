@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
+	"net"
 	"sync"
 	"time"
 )
@@ -36,6 +37,7 @@ type Node struct {
 	neighborChannel        chan []byte   // Channel for general communication with neighbors
 	recentlySentBlocks     map[int]bool
 	lastMinedSenderID      int
+	
 }
 
 func NewNode(id, transactionThreshold, miningDifficulty int) *Node {
